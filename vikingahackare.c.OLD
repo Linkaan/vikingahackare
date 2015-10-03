@@ -1,0 +1,91 @@
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+#define INPUT_LENGTH 10
+#define MAX_ROWS_LENGTH 10
+#define MAX_RUNE_LENGTH 4001
+
+void replace(char *, char *, char *);
+
+int main() {
+  int i, j, k, n;
+  char bufstr[5];
+  char replacement[5];
+  char **input;
+  char rows[MAX_ROWS_LENGTH];
+  char rune[MAX_RUNE_LENGTH];
+
+  char *lookup_table[] = {
+    "0000",
+    "0001",
+    "0010",
+    "0011",
+    "0100",
+    "0101",
+    "0110",
+    "0111",
+    "1000",
+    "1001",
+    "1010",
+    "1011",
+    "1100",
+    "1101",
+    "1110",
+    "1111",
+  };
+  n = 16;
+
+  fgets(rows, MAX_ROWS_LENGTH, stdin);
+  input = calloc(atoi(rows), sizeof(char*));
+  for(i=0;i<atoi(rows);i++) {
+    input[i] = malloc(INPUT_LENGTH * sizeof(char));
+    fgets(input[i], INPUT_LENGTH, stdin);
+    strtok(input[i], "\n");
+  }
+  fgets(rune, MAX_RUNE_LENGTH, stdin);
+
+  for(i=0;i<atoi(rows);i++) {
+    memcpy(bufstr, &input[i][2], 4);
+    bufstr[4] = '\0';
+    for(j=0;j<n;j++) {
+      if(strcmp(bufstr, lookup_table[j])==0) {
+        for(k=j;k<n-1;k++) lookup_table[k] = lookup_table[k+1];
+        n--;
+        break;
+      }
+    }
+    replacement[0] = *input[i];
+    replacement[3] = replacement[2] = replacement[1] = ' ';
+    replacement[4] = '\0';
+    replace(rune, bufstr, replacement);
+  }
+  for(i=0;i<atoi(rows);i++) {
+    free(input[i]);
+  }
+  free(input);
+  for(i=0;i<n;i++) {
+    replace(rune, lookup_table[i], "?");
+  }
+  char *p = rune;
+  for(i=0;i!=strlen(rune);i++) {
+    if(rune[i]!=' ') *p++ = rune[i];
+  }
+  *p = 0;
+  strtok(rune, "\n");
+  fprintf(stdout, "%s\n", rune);
+}
+
+void replace(char *string, char *substring, char *replacement) {
+  char buffer[(MAX_RUNE_LENGTH-1)/4+1];
+  char *ch;
+
+  if(!(ch = strstr(string, substring)) || (ch-string) % 4 != 0)
+    return;
+  strncpy(buffer, string, ch-string);
+  buffer[ch-string] = 0;
+  snprintf(buffer+(ch-string),(MAX_RUNE_LENGTH-1)/4-(ch-string), "%s%s", replacement, ch+strlen(substring));
+  string[0] = 0;
+  strcpy(string, buffer);
+  return replace(string, substring, replacement);
+}
